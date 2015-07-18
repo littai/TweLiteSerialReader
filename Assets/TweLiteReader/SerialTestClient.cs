@@ -6,15 +6,19 @@ public class SerialTestClient : MonoBehaviour {
 	void Awake() {
 	}
 
-	void onSerialDataReceived (SerialHandler.TweLiteData data)
-	{
-//		Debug.Log ("#####DATA RECEIVED:" + data);	
-	}
+	void onPressed(int id) {
+		Debug.Log ("onPressed: " + id);
+    }
+	
+	void onReleased(int id) {
+		Debug.Log ("onReleased: " + id);
+    }
 
 	// Use this for initialization
 	void Start () {
 		SerialHandler.Instance.Open();
-		SerialHandler.Instance.SerialDataReceived += onSerialDataReceived;
+		SerialHandler.Instance.Pressed += onPressed;
+		SerialHandler.Instance.Released += onReleased;
 	}
 
 	

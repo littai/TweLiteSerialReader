@@ -6,26 +6,27 @@ using System.Threading;
 
 public class SerialHandler : MonoBehaviour
 {
-	public delegate void SerialDataReceivedEventHandler(TweLiteData data);
-	public event SerialDataReceivedEventHandler SerialDataReceived;
-	
-	public string portName = "/dev/tty.usbserial-AHY1U6SB";
+	// events
+	public delegate void SerialDataHandler(int id);
+	public event SerialDataHandler Pressed;
+	public event SerialDataHandler Released;
+//	public event SerialDataHandler SwitchChanged;
+
+	// serial
+    public string portName = "/dev/tty.usbserial-AHY1U6SB";
 	public int baudRate    = 115200;
-	
+
+	private static SerialHandler instance = null;
+
+	// serial data
 	private SerialPort serialPort_;
 	private bool isRunning_ = false;
 	private Queue<string> messageQueue_ = new Queue<string>();
 	private Thread thread_;
 	private object guard = new object();
 
-	private static SerialHandler instance = null;
-
-	public struct TweLiteData {
-		public int id;
-		public int target_di;
-		public int value;
-	}
-
+	private int PushDown = 0;
+	private int PushUp = 1;
 
 	public static SerialHandler Instance {
 		get { return SerialHandler.instance; }
@@ -42,17 +43,28 @@ public class SerialHandler : MonoBehaviour
 	
 	void Update()
 	{
+		Queue<string> tmpQueue = null;
 		lock(guard) {
 			while(messageQueue_.Count > 0) {
-				string msg = messageQueue_.Dequeue();
-				TweLiteData data;
-				data.id = System.Convert.ToInt16(msg.Substring(1, 2), 16);
-				data.value = System.Convert.ToInt16(msg.Substring(33, 2), 16);
-				data.target_di = System.Convert.ToInt16(msg.Substring(35, 2), 16);
-				Debug.Log("id: " + data.id + ", target: " + data.target_di + ", val: " + data.value);
-//				SerialDataReceived(data);
+				tmpQueue = new Queue<string>(messageQueue_);
+				messageQueue_.Clear();
 			}
 		}
+
+		if(tmpQueue	!= null) {
+			while(tmpQueue.Count > 0) {
+				string msg = tmpQueue.Dequeue();
+				int id = System.Convert.ToInt16(msg.Substring(1, 2), 16);
+				int value = System.Convert.ToInt16(msg.Substring(33, 2), 16);
+//				int target_di = System.Convert.ToInt16(msg.Substring(35, 2), 16);
+				if(value == PushDown) {
+					Pressed(id);
+				} else if(value == PushUp) {
+					Released(id);
+				}
+			}
+		}
+
 	}
 	
 	void OnDestroy()
@@ -99,8 +111,8 @@ public class SerialHandler : MonoBehaviour
 					lock(guard) {
 						messageQueue_.Enqueue(serialPort_.ReadLine());
 					}
-					Thread.Sleep (0);
 				}
+				Thread.Sleep (0); // for avoiding busy loop
 			} catch (System.Exception e) {
 				 Debug.LogWarning(e.Message);
 			}
