@@ -10,11 +10,15 @@ public class SerialHandler : MonoBehaviour
 	public delegate void SerialDataHandler(int id);
 	public event SerialDataHandler Pressed;
 	public event SerialDataHandler Released;
-//	public event SerialDataHandler SwitchChanged;
+	public event SerialDataHandler SwitchOn;
+	public event SerialDataHandler SwitchOff;
 
 	// serial
     public string portName = "/dev/tty.usbserial-AHY1U6SB";
 	public int baudRate    = 115200;
+
+	public int SwitchId = 12;
+	private bool isSwitchOn = false;
 
 	private static SerialHandler instance = null;
 
@@ -57,10 +61,25 @@ public class SerialHandler : MonoBehaviour
 				int id = System.Convert.ToInt16(msg.Substring(1, 2), 16);
 				int value = System.Convert.ToInt16(msg.Substring(33, 2), 16);
 //				int target_di = System.Convert.ToInt16(msg.Substring(35, 2), 16);
+//				Debug.Log (id+ " : " + value);
 				if(value == PushDown) {
-					Pressed(id);
+					if(id == SwitchId) {
+						if(isSwitchOn == false) {
+							SwitchOn(id);
+							isSwitchOn = true;
+						}
+					} else {
+						Pressed(id);
+					}
 				} else if(value == PushUp) {
-					Released(id);
+					if(id == SwitchId) {
+						if(isSwitchOn == true) {
+							SwitchOff(id);
+							isSwitchOn = false;
+						}
+					} else {
+						Released(id);
+					}
 				}
 			}
 		}
