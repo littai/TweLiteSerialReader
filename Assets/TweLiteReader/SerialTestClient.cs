@@ -9,7 +9,11 @@ public class SerialTestClient : MonoBehaviour {
 	void onPressed(int id) {
 		Debug.Log (System.DateTime.Now + " onPressed: " + id);
     }
-	
+
+	void onPressing(int id, bool isPressing) {
+//		Debug.Log (System.DateTime.Now + " onPressing: " + id + ": " + isPressing.ToString());
+	}
+
 	void onReleased(int id) {
 		Debug.Log (System.DateTime.Now + " onReleased: " + id);
     }
@@ -24,14 +28,15 @@ public class SerialTestClient : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		SerialHandler.Instance.Open();
-		SerialHandler.Instance.Pressed += onPressed;
-		SerialHandler.Instance.Released += onReleased;
-		SerialHandler.Instance.SwitchOn += onSwitchOn;
-		SerialHandler.Instance.SwitchOff += onSwitchOff;
+		Debug.Log("@SerialTestClient");
+		SerialHandler.Open();
+		SerialHandler.Pressed += onPressed;
+		SerialHandler.Pressing += onPressing;
+		SerialHandler.Released += onReleased;
+		SerialHandler.SwitchOn += onSwitchOn;
+		SerialHandler.SwitchOff += onSwitchOff;
 	}
 
-	
 	// Update is called once per frame
 	void Update () {
 	

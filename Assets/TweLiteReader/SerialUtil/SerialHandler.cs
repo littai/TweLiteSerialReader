@@ -8,10 +8,13 @@ public class SerialHandler : MonoBehaviour
 {
 	// events
 	public delegate void SerialDataHandler(int id);
-	public event SerialDataHandler Pressed;
-	public event SerialDataHandler Released;
-	public event SerialDataHandler SwitchOn;
-	public event SerialDataHandler SwitchOff;
+	public delegate void SerialPressingDataHandler(int id, bool isPressing);
+
+	public static event SerialDataHandler Pressed 		   = (int id) => {};
+	public static event SerialPressingDataHandler Pressing = (int id, bool isPressing) => {};
+	public static event SerialDataHandler Released 		   = (int id) => {};
+	public static event SerialDataHandler SwitchOn 		   = (int id) => {};
+	public static event SerialDataHandler SwitchOff 	   = (int id) => {};
 
 	// serial
     public string portName = "/dev/tty.usbserial-AHY1U6SB";
@@ -20,6 +23,11 @@ public class SerialHandler : MonoBehaviour
 	public int SwitchId = 12;
 	private bool isSwitchOn = false;
 
+	// test
+	public bool isEmulation = false;
+	public string emulationKey = "Fire1";
+	public int emulationId = 0;
+
 	private static SerialHandler instance = null;
 
 	// serial data
@@ -27,10 +35,12 @@ public class SerialHandler : MonoBehaviour
 	private bool isRunning_ = false;
 	private Queue<string> messageQueue_ = new Queue<string>();
 	private Thread thread_;
-	private object guard = new object();
+	private object guard_ = new object();
 
-	private int PushDown = 0;
+	private int PushDown = 2;
 	private int PushUp = 1;
+
+	private Dictionary<int, bool> isPressing_ = new Dictionary<int, bool>();
 
 	public static SerialHandler Instance {
 		get { return SerialHandler.instance; }
@@ -48,7 +58,7 @@ public class SerialHandler : MonoBehaviour
 	void Update()
 	{
 		Queue<string> tmpQueue = null;
-		lock(guard) {
+		lock(guard_) {
 			while(messageQueue_.Count > 0) {
 				tmpQueue = new Queue<string>(messageQueue_);
 				messageQueue_.Clear();
@@ -69,6 +79,7 @@ public class SerialHandler : MonoBehaviour
 							isSwitchOn = true;
 						}
 					} else {
+						isPressing_[id] = true;
 						Pressed(id);
 					}
 				} else if(value == PushUp) {
@@ -78,20 +89,42 @@ public class SerialHandler : MonoBehaviour
 							isSwitchOn = false;
 						}
 					} else {
+						isPressing_[id] = false;
 						Released(id);
 					}
 				}
 			}
 		}
 
+		foreach(var key in isPressing_.Keys) {
+			Pressing(key, isPressing_[key]);
+		}
+
+		if(isEmulation) {
+			if(Input.GetButtonDown(emulationKey)) {
+				Pressed(emulationId);
+				Released(emulationId);
+			}
+		}
 	}
 	
 	void OnDestroy()
 	{
-		Close();
+		Close_();
 	}
 	
-	public void Open()
+	public static void Open()
+	{
+		Debug.Log("try to Open");
+		Instance.Open_();
+	}
+
+	public static void Close()
+	{
+		Instance.Close_();
+	}
+
+	private void Open_()
 	{
 		try {
 			serialPort_ = new SerialPort(portName, baudRate, Parity.None, 8, StopBits.One);
@@ -99,7 +132,7 @@ public class SerialHandler : MonoBehaviour
 			
 			isRunning_ = true;
 			
-			thread_ = new Thread(Read);
+			thread_ = new Thread(Read_);
 			thread_.Start();
 			
 			Debug.Log("Connected!");
@@ -108,7 +141,7 @@ public class SerialHandler : MonoBehaviour
 		}
 	}
 	
-	public void Close()
+	private void Close_()
 	{
 		isRunning_ = false;
 		
@@ -122,12 +155,12 @@ public class SerialHandler : MonoBehaviour
 		}
 	}
 	
-	private void Read()
+	private void Read_()
 	{
 		while (isRunning_ && serialPort_ != null && serialPort_.IsOpen) {
 			try {
 				if (serialPort_.BytesToRead > 0) {
-					lock(guard) {
+					lock(guard_) {
 						messageQueue_.Enqueue(serialPort_.ReadLine());
 					}
 				}
@@ -135,15 +168,6 @@ public class SerialHandler : MonoBehaviour
 			} catch (System.Exception e) {
 				 Debug.LogWarning(e.Message);
 			}
-		}
-	}
-	
-	public void Write(string message)
-	{
-		try {
-			serialPort_.Write(message);
-		} catch (System.Exception e) {
-			 Debug.LogWarning(e.Message);
 		}
 	}
 }
