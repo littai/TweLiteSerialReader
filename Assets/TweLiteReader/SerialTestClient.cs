@@ -10,8 +10,8 @@ public class SerialTestClient : MonoBehaviour {
 		Debug.Log (System.DateTime.Now + " onPressed: " + id);
     }
 
-	void onPressing(int id, bool isPressing) {
-//		Debug.Log (System.DateTime.Now + " onPressing: " + id + ": " + isPressing.ToString());
+	void onPressing(int id) {
+		Debug.Log (System.DateTime.Now + " onPressing: " + id);
 	}
 
 	void onReleased(int id) {

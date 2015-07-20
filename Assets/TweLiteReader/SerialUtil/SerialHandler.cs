@@ -8,10 +8,9 @@ public class SerialHandler : MonoBehaviour
 {
 	// events
 	public delegate void SerialDataHandler(int id);
-	public delegate void SerialPressingDataHandler(int id, bool isPressing);
 
 	public static event SerialDataHandler Pressed 		   = (int id) => {};
-	public static event SerialPressingDataHandler Pressing = (int id, bool isPressing) => {};
+	public static event SerialDataHandler Pressing 		   = (int id) => {};
 	public static event SerialDataHandler Released 		   = (int id) => {};
 	public static event SerialDataHandler SwitchOn 		   = (int id) => {};
 	public static event SerialDataHandler SwitchOff 	   = (int id) => {};
@@ -97,7 +96,9 @@ public class SerialHandler : MonoBehaviour
 		}
 
 		foreach(var key in isPressing_.Keys) {
-			Pressing(key, isPressing_[key]);
+			if(isPressing_[key]) {
+				Pressing(key);
+			}
 		}
 
 		if(isEmulation) {

@@ -311,6 +311,10 @@ Prefab:
       propertyPath: SwitchId
       value: 12
       objectReference: {fileID: 0}
+    - target: {fileID: 11400000, guid: a4756a587317b4a059cd7e72a1f2689e, type: 2}
+      propertyPath: isEmulation
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: a4756a587317b4a059cd7e72a1f2689e, type: 2}
   m_IsPrefabParent: 0
